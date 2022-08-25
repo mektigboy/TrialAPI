@@ -1,16 +1,57 @@
 import fetch from "cross-fetch";
-import { AnchorProvider } from "@project-serum/anchor";
-import { ChangeEvent, useState } from "react";
-import { Commitment, Connection } from "@solana/web3.js";
+import { AnchorProvider, BN } from "@project-serum/anchor";
+import { ChangeEvent, useEffect, useState } from "react";
+import { Commitment, Connection, Transaction } from "@solana/web3.js";
+import { JupiterProvider, useJupiter } from "@jup-ag/react-hook";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { Wallet } from "@project-serum/anchor";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 interface ConverterProps {
   network: string;
 }
-
 export const Converter: React.FC<ConverterProps> = ({ network }) => {
   const wallet = useWallet();
+
+  const swapTokens = async () => {
+    const { data } = await (
+      await fetch(
+        `https://quote-api.jup.ag/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=NGK3iHqqQkyRZUj4uhJDQqEyKKcZ7mdawWpqwMffM3s&amount=${amountFrom}&slippage=0.5&feeBps=1`
+      )
+    ).json();
+    const routes = data;
+    console.log(routes);
+
+    const transactions = await (
+      await fetch("https://quote-api.jup.ag/v1/swap", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route: routes[0],
+          userPublicKey: wallet.publicKey!.toString(),
+          wrapUnwrapSOL: true,
+          feeAccount: "fee_account_public_key",
+        }),
+      })
+    ).json();
+
+    const { setupTransaction, swapTransaction, cleanupTransaction } =
+      transactions;
+
+    for (let serializedTransaction of [
+      setupTransaction,
+      swapTransaction,
+      cleanupTransaction,
+    ].filter(Boolean)) {
+      const transaction = Transaction.from(
+        Buffer.from(serializedTransaction, "base64")
+      );
+      const txid = await wallet.sendTransaction(transaction, connection);
+      console.log(`https://solscan.io/tx/${txid}`);
+    }
+  };
 
   const [amountFrom, setAmountFrom] = useState<number>(1);
   const [amountTo, setAmountTo] = useState();
@@ -27,39 +68,7 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
     preflightCommitment: "processed",
   };
 
-  const getConnectionProvider = () => {
-    const connection = new Connection(network, options.preflightCommitment);
-    const provider = new AnchorProvider(connection, wallet as any, options);
-    return provider;
-  };
-  const provider = getConnectionProvider();
-
-  // const retrieveRouteMap = async () => {
-  //   // retrieve indexed routed map
-  //   const indexedRouteMap = await (
-  //     await fetch("https://quote-api.jup.ag/v1/indexed-route-map")
-  //   ).json();
-  //   const getMint = (index: string) => {indexedRouteMap["mintKeys"][index];
-  //   const getIndex = (mint: any) => {indexedRouteMap["mintKeys"].indexOf(mint);
-
-  //   // generate route map by replacing indexes with mint addresses
-  //   var generatedRouteMap = {};
-  //   Object.keys(indexedRouteMap["indexedRouteMap"]).forEach((key, index) => {
-  //     generatedRouteMap[getMint(key)] = indexedRouteMap["indexedRouteMap"][
-  //       key
-  //     ].map((index: string) => getMint(index));
-  //   });
-
-  //   // list all possible input tokens by mint Address
-  //   const allInputMints = Object.keys(generatedRouteMap);
-
-  //   // list tokens can swap by mint addressfor SOL
-  //   const swappableOutputForSol =
-  //     generatedRouteMap["So11111111111111111111111111111111111111112"];
-  //   // console.log({ allInputMints, swappableOutputForSol })
-  // };
-
-  // const routeMap = retrieveRouteMap();
+  const connection = new Connection(network, options.preflightCommitment);
 
   return (
     <div>
@@ -73,20 +82,22 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
           <div className="token">$SOL</div>
         </div>
       </div>
-      <div className="mb-25">
+      {/* <div className="mb-25">
         <label>To:</label>
         <div className="input">
           <input onChange={onAmountToChange} value={amountTo} />
           <div className="token">$YAKU</div>
         </div>
-      </div>
+      </div> */}
       <div className="mt-50 mb-50">
         <div className="mb-25">Transaction Settings</div>
-        <div className="mb-25">Slippage Tolerance: </div>
-        <div className="mb-25">Allowance: </div>
-        <div className="mb-25">Swap Fee: </div>
+        <div className="mb-25">Slippage Tolerance: 0.5%</div>
+        <div className="mb-25">Allowance: Exact Amount</div>
+        <div className="mb-25">Swap Fee: 0.01%</div>
       </div>
-      <button className="convert-button">Convert</button>
+      <button className="convert-button" onClick={swapTokens}>
+        Convert
+      </button>
     </div>
   );
 };
