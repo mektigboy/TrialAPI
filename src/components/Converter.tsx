@@ -34,33 +34,33 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
   };
   const provider = getConnectionProvider();
 
-  const retrieveRouteMap = async ({index, mint}) => {
-    // retrieve indexed routed map
-    const indexedRouteMap = await (
-      await fetch("https://quote-api.jup.ag/v1/indexed-route-map")
-    ).json();
-    const getMint = (index) => indexedRouteMap["mintKeys"][index];
-    const getIndex = (mint) => indexedRouteMap["mintKeys"].indexOf(mint);
+  // const retrieveRouteMap = async () => {
+  //   // retrieve indexed routed map
+  //   const indexedRouteMap = await (
+  //     await fetch("https://quote-api.jup.ag/v1/indexed-route-map")
+  //   ).json();
+  //   const getMint = (index: string) => {indexedRouteMap["mintKeys"][index];
+  //   const getIndex = (mint: any) => {indexedRouteMap["mintKeys"].indexOf(mint);
 
-    // generate route map by replacing indexes with mint addresses
-    var generatedRouteMap = {};
-    Object.keys(indexedRouteMap["indexedRouteMap"]).forEach((key, index) => {
-      generatedRouteMap[getMint(key)] = indexedRouteMap["indexedRouteMap"][
-        key
-      ].map((index) => getMint(index));
-    });
+  //   // generate route map by replacing indexes with mint addresses
+  //   var generatedRouteMap = {};
+  //   Object.keys(indexedRouteMap["indexedRouteMap"]).forEach((key, index) => {
+  //     generatedRouteMap[getMint(key)] = indexedRouteMap["indexedRouteMap"][
+  //       key
+  //     ].map((index: string) => getMint(index));
+  //   });
 
-    // list all possible input tokens by mint Address
-    const allInputMints = Object.keys(generatedRouteMap);
+  //   // list all possible input tokens by mint Address
+  //   const allInputMints = Object.keys(generatedRouteMap);
 
-    // list tokens can swap by mint addressfor SOL
-    const swappableOutputForSol =
-      generatedRouteMap["So11111111111111111111111111111111111111112"];
-    // console.log({ allInputMints, swappableOutputForSol })
-  };
+  //   // list tokens can swap by mint addressfor SOL
+  //   const swappableOutputForSol =
+  //     generatedRouteMap["So11111111111111111111111111111111111111112"];
+  //   // console.log({ allInputMints, swappableOutputForSol })
+  // };
 
-  const routeMap = retrieveRouteMap();
-  
+  // const routeMap = retrieveRouteMap();
+
   return (
     <div>
       <h1 className="mb-25">Convert</h1>
