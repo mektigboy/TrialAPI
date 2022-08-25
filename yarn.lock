@@ -1576,6 +1576,13 @@
     "@json-rpc-tools/types" "^1.7.6"
     "@pedrouid/environment" "^1.0.1"
 
+"@jup-ag/api@^0.0.5":
+  "integrity" "sha512-XzhJqotxoAfd2qPwzjCX6+S5rUJi4ZYFB218Ni4NxAnHb0ZQ2imxpGYhsJQV/BhcHGC6LcpbkCCL+QYsX7frQQ=="
+  "resolved" "https://registry.npmjs.org/@jup-ag/api/-/api-0.0.5.tgz"
+  "version" "0.0.5"
+  dependencies:
+    "cross-fetch" "^3.1.5"
+
 "@jup-ag/core@^2.0.0-beta.3", "@jup-ag/core@2.0.0-beta.3":
   "integrity" "sha512-/p1axCvvgBUSDa1mRUHP/ezKx0Kxa/LT0qw4OLEThYIUjqpnudrdeB5mZKOYMmG8TnWC/n+I0+mlNJ8H5fks7A=="
   "resolved" "https://registry.npmjs.org/@jup-ag/core/-/core-2.0.0-beta.3.tgz"
@@ -2150,6 +2157,13 @@
   "version" "3.0.0"
   dependencies:
     "buffer" "~6.0.3"
+
+"@solana/spl-token-registry@^0.2.4574":
+  "integrity" "sha512-JzlfZmke8Rxug20VT/VpI2XsXlsqMlcORIUivF+Yucj7tFi7A0dXG7h+2UnD0WaZJw8BrUz2ABNkUnv89vbv1A=="
+  "resolved" "https://registry.npmjs.org/@solana/spl-token-registry/-/spl-token-registry-0.2.4574.tgz"
+  "version" "0.2.4574"
+  dependencies:
+    "cross-fetch" "3.0.6"
 
 "@solana/spl-token-v2@npm:@solana/spl-token@0.2.0":
   "integrity" "sha512-RWcn31OXtdqIxmkzQfB2R+WpsJOVS6rKuvpxJFjvik2LyODd+WN58ZP3Rpjpro03fscGAkzlFuP3r42doRJgyQ=="
@@ -4781,6 +4795,13 @@
   "version" "3.1.5"
   dependencies:
     "node-fetch" "2.6.7"
+
+"cross-fetch@3.0.6":
+  "integrity" "sha512-KBPUbqgFjzWlVcURG+Svp9TlhA5uliYtiNx/0r8nv0pdypeQCRJ9IaSIc3q/x3q8t3F75cHuwxVql1HFGHCNJQ=="
+  "resolved" "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.0.6.tgz"
+  "version" "3.0.6"
+  dependencies:
+    "node-fetch" "2.6.1"
 
 "cross-spawn@^7.0.2", "cross-spawn@^7.0.3":
   "integrity" "sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w=="
@@ -8203,6 +8224,11 @@
   "integrity" "sha512-Ntyt4AIXyaLIuMHF6IOoTakB3K+RWxwtsHNRxllEoA6vPwP9o4866g6YWDLUdnucilZhmkxiHwHr11gAENw+QA=="
   "resolved" "https://registry.npmjs.org/node-addon-api/-/node-addon-api-2.0.2.tgz"
   "version" "2.0.2"
+
+"node-fetch@2.6.1":
+  "integrity" "sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw=="
+  "resolved" "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.1.tgz"
+  "version" "2.6.1"
 
 "node-fetch@2", "node-fetch@2.6.7":
   "integrity" "sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ=="
