@@ -16,9 +16,14 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
   const wallet = useWallet();
 
   const [amountFrom, setAmountFrom] = useState<number>(1);
+  const [amountTo, setAmountTo] = useState<number>(1);
+
 
   const onAmountFromChange = (event: ChangeEvent<any>) => {
     setAmountFrom(event.target.value);
+  };
+  const onAmountToChange = (event: ChangeEvent<any>) => {
+    setAmountTo(event.target.value);
   };
 
   const options: { preflightCommitment: Commitment } = {
@@ -28,7 +33,7 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
   const connection = new Connection(network, options.preflightCommitment);
 
   const amountToSend = amountFrom * 1e9;
-  
+
   const swapTokens = async () => {
     const { data } = await (
       await fetch(
@@ -63,7 +68,9 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
       const transaction = Transaction.from(
         Buffer.from(serializedTransaction, "base64")
       );
-      const txid = await wallet.sendTransaction(transaction, connection);
+      const txid = await wallet.sendTransaction(transaction, connection, {
+        skipPreflight: true,
+      });
       console.log(`https://solscan.io/tx/${txid}`);
     }
   };
@@ -80,13 +87,13 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
           <div className="token">$SOL</div>
         </div>
       </div>
-      {/* <div className="mb-25">
+      <div className="mb-25">
         <label>To:</label>
         <div className="input">
-          <input onChange={onAmountToChange} value={amountTo} />
+          <input onChange={onAmountToChange} value={amountFrom * 2954.8 } />
           <div className="token">$YAKU</div>
         </div>
-      </div> */}
+      </div>
       <div className="mt-50 mb-50">
         <div className="mb-25">Transaction Settings</div>
         <div className="mb-25">Slippage Tolerance: 0.5%</div>
