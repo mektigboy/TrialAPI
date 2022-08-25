@@ -1,0 +1,38 @@
+@font-face {
+  font-family: "Share Tech Mono";
+  src: url("./fonts/ShareTechMono-Regular.ttf");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 20px;
+  background: var(--color-black);
+  color: var(--color-green);
+}
+
+h1 {
+  font-size: 50px;
+}
+
+h2 {
+  font-size: 30px;
+}
+
+input {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 20px;
+  width: 100%;
+  height: 50px;
+  padding: 0 25px;
+  border: 1px solid black;
+  background-color: white;
+  color: black;
+}
