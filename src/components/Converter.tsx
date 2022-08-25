@@ -1,12 +1,8 @@
 import fetch from "cross-fetch";
-import { AnchorProvider, BN } from "@project-serum/anchor";
-import { ChangeEvent, useEffect, useState } from "react";
-import { Commitment, Connection, Transaction } from "@solana/web3.js";
-import { JupiterProvider, useJupiter } from "@jup-ag/react-hook";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Wallet } from "@project-serum/anchor";
+import { ChangeEvent, useState } from "react";
+import { Commitment, Transaction } from "@solana/web3.js";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 
 interface ConverterProps {
   network: string;
@@ -15,9 +11,10 @@ interface ConverterProps {
 export const Converter: React.FC<ConverterProps> = ({ network }) => {
   const wallet = useWallet();
 
+  const { connection } = useConnection();
+
   const [amountFrom, setAmountFrom] = useState<number>(1);
   const [amountTo, setAmountTo] = useState<number>(1);
-
 
   const onAmountFromChange = (event: ChangeEvent<any>) => {
     setAmountFrom(event.target.value);
@@ -25,12 +22,6 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
   const onAmountToChange = (event: ChangeEvent<any>) => {
     setAmountTo(event.target.value);
   };
-
-  const options: { preflightCommitment: Commitment } = {
-    preflightCommitment: "processed",
-  };
-
-  const connection = new Connection(network, options.preflightCommitment);
 
   const amountToSend = amountFrom * 1e9;
 
@@ -50,7 +41,7 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
         },
         body: JSON.stringify({
           route: routes[0],
-          userPublicKey: wallet.publicKey!.toString(),
+          userPublicKey: wallet.publicKey!.toBase58(),
           wrapUnwrapSOL: true,
           feeAccount: "6vEHAWe3ubJLY8cqWS82wYwXtzrt7FA4dVnGnFfjM9DB",
         }),
@@ -90,7 +81,7 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
       <div className="mb-25">
         <label>To:</label>
         <div className="input">
-          <input onChange={onAmountToChange} value={amountFrom * 2954.8 } />
+          <input onChange={onAmountToChange} value={amountFrom * 2954.8} />
           <div className="token">$YAKU</div>
         </div>
       </div>
