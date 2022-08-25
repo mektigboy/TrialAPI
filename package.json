@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@jup-ag/api": "^0.0.5",
     "@jup-ag/core": "^2.0.0-beta.3",
     "@jup-ag/react-hook": "^2.0.0-beta.3",
     "@project-serum/anchor": "^0.25.0",
     "@solana/spl-token": "^0.3.2",
+    "@solana/spl-token-registry": "^0.2.4574",
     "@solana/wallet-adapter-base": "^0.9.9",
     "@solana/wallet-adapter-react": "^0.15.8",
     "@solana/wallet-adapter-react-ui": "^0.9.10",
