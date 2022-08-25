@@ -6,21 +6,36 @@ import { JupiterProvider, useJupiter } from "@jup-ag/react-hook";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Wallet } from "@project-serum/anchor";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 
 interface ConverterProps {
   network: string;
 }
+
 export const Converter: React.FC<ConverterProps> = ({ network }) => {
   const wallet = useWallet();
 
+  const [amountFrom, setAmountFrom] = useState<number>(1);
+
+  const onAmountFromChange = (event: ChangeEvent<any>) => {
+    setAmountFrom(event.target.value);
+  };
+
+  const options: { preflightCommitment: Commitment } = {
+    preflightCommitment: "processed",
+  };
+
+  const connection = new Connection(network, options.preflightCommitment);
+
+  const amountToSend = amountFrom * 1e9;
+  
   const swapTokens = async () => {
     const { data } = await (
       await fetch(
-        `https://quote-api.jup.ag/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=NGK3iHqqQkyRZUj4uhJDQqEyKKcZ7mdawWpqwMffM3s&amount=${amountFrom}&slippage=0.5&feeBps=1`
+        `https://quote-api.jup.ag/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=NGK3iHqqQkyRZUj4uhJDQqEyKKcZ7mdawWpqwMffM3s&amount=${amountToSend}&slippage=0.5&feeBps=1`
       )
     ).json();
     const routes = data;
-    console.log(routes);
 
     const transactions = await (
       await fetch("https://quote-api.jup.ag/v1/swap", {
@@ -32,7 +47,7 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
           route: routes[0],
           userPublicKey: wallet.publicKey!.toString(),
           wrapUnwrapSOL: true,
-          feeAccount: "fee_account_public_key",
+          feeAccount: "6vEHAWe3ubJLY8cqWS82wYwXtzrt7FA4dVnGnFfjM9DB",
         }),
       })
     ).json();
@@ -52,23 +67,6 @@ export const Converter: React.FC<ConverterProps> = ({ network }) => {
       console.log(`https://solscan.io/tx/${txid}`);
     }
   };
-
-  const [amountFrom, setAmountFrom] = useState<number>(1);
-  const [amountTo, setAmountTo] = useState();
-
-  const onAmountFromChange = (event: ChangeEvent<any>) => {
-    setAmountFrom(event.target.value);
-  };
-
-  const onAmountToChange = (event: ChangeEvent<any>) => {
-    setAmountTo(event.target.value);
-  };
-
-  const options: { preflightCommitment: Commitment } = {
-    preflightCommitment: "processed",
-  };
-
-  const connection = new Connection(network, options.preflightCommitment);
 
   return (
     <div>
