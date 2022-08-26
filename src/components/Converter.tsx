@@ -1,6 +1,6 @@
 import fetch from "cross-fetch";
-import { ChangeEvent, useState } from "react";
-import { Commitment, Transaction } from "@solana/web3.js";
+import { ChangeEvent, useEffect, useState } from "react";
+import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
@@ -14,10 +14,11 @@ export const Converter: React.FC<ConverterProps> = () => {
   const { connection } = useConnection();
 
   const [amount, setAmount] = useState<number>(1);
+  const [price, setPrice] = useState<number>(0);
   const [slippage, setSlippage] = useState<number>(0.5);
 
   const [tokenFrom, setTokenFrom] = useState<string>("SOL");
-  const [tokenTo, setTokenTo] = useState<string>("COSMIC");
+  const [tokenTo, setTokenTo] = useState<string>("YAKU");
 
   const onAmountChange = (event: ChangeEvent<any>) => {
     setAmount(event.target.value);
@@ -28,15 +29,28 @@ export const Converter: React.FC<ConverterProps> = () => {
 
   const amountToSend = amount * 1e9;
 
-  const retrieveRouteMap = async () => {
-    const indexedRouteMap = await (
-      await fetch("https://quote-api.jup.ag/v1/indexed-route-map")
-    ).json();
-    return indexedRouteMap;
-  };
+  // const retrieveRouteMap = async () => {
+  //   const indexedRouteMap = await (
+  //     await fetch("https://quote-api.jup.ag/v1/indexed-route-map")
+  //   ).json();
+  //   return indexedRouteMap;
+  // };
 
-  const indexedRouteMap = retrieveRouteMap();
-  console.log(indexedRouteMap);
+  // const indexedRouteMap = retrieveRouteMap();
+  // console.log(indexedRouteMap);
+
+  useEffect(() => {
+    const getPrice = async () => {
+      const response = await fetch(
+        `https://price.jup.ag/v1/price?id=${tokenFrom}&vsToken=${tokenTo}`
+      );
+      const newPrice = await response.json();
+      const price = newPrice.data.price;
+      setPrice(price);
+      console.log(price);
+    };
+    getPrice();
+  }, [tokenFrom, tokenTo]);
 
   const swapTokens = async () => {
     const { data } = await (
@@ -109,7 +123,7 @@ export const Converter: React.FC<ConverterProps> = () => {
           <input
             className="token-input"
             onChange={onAmountChange}
-            value={amount * 2954.8}
+            value={price}
           />
           <div className="token">${tokenTo}</div>
         </div>
