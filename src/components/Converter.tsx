@@ -9,35 +9,36 @@ interface ConverterProps {
 }
 
 export const Converter: React.FC<ConverterProps> = () => {
+  // Wallet Connection
   const wallet = useWallet();
-
   const { connection } = useConnection();
 
   const [amount, setAmount] = useState<number>(1);
-  const [price, setPrice] = useState<number>(0);
-  const [slippage, setSlippage] = useState<number>(0.5);
+  const [debouncedPrice, setDebouncedPrice] = useState<number>(amount);
+  const [price, setPrice] = useState([]);
 
   const [tokenFrom, setTokenFrom] = useState<string>("SOL");
   const [tokenTo, setTokenTo] = useState<string>("YAKU");
 
+  const [slippage, setSlippage] = useState<number>(0.5);
+
   const onAmountChange = (event: ChangeEvent<any>) => {
     setAmount(event.target.value);
   };
+
   const onSlippageChange = (event: ChangeEvent<any>) => {
     setSlippage(event.target.value);
   };
 
-  const amountToSend = amount * 1e9;
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedPrice(amount);
+    }, 100);
 
-  // const retrieveRouteMap = async () => {
-  //   const indexedRouteMap = await (
-  //     await fetch("https://quote-api.jup.ag/v1/indexed-route-map")
-  //   ).json();
-  //   return indexedRouteMap;
-  // };
-
-  // const indexedRouteMap = retrieveRouteMap();
-  // console.log(indexedRouteMap);
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [amount]);
 
   useEffect(() => {
     const getPrice = async () => {
@@ -45,67 +46,41 @@ export const Converter: React.FC<ConverterProps> = () => {
         `https://price.jup.ag/v1/price?id=${tokenFrom}&vsToken=${tokenTo}`
       );
       const newPrice = await response.json();
-      const price = newPrice.data.price;
-      setPrice(price);
-      console.log(price);
+      setPrice(newPrice.data.price);
     };
     getPrice();
   }, [tokenFrom, tokenTo]);
 
-  const swapTokens = async () => {
-    const { data } = await (
-      await fetch(
-        `https://quote-api.jup.ag/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=NGK3iHqqQkyRZUj4uhJDQqEyKKcZ7mdawWpqwMffM3s&amount=${amountToSend}&slippage=${slippage}&feeBps=1`
-      )
-    ).json();
-    const routes = data;
+  // useEffect(() => {
+  //   const search = async () => {
+  //     const { data } = await axios.get("https://en.wikipedia.org/w/api.php", {
+  //       params: {
+  //         action: "query",
+  //         list: "search",
+  //         origin: "*",
+  //         format: "json",
+  //         srsearch: debouncedPrice,
+  //       },
+  //     });
+  //     setPrice(data.query.search);
+  //   };
+  //   search();
+  // }, [debouncedPrice]);
 
-    const transactions = await (
-      await fetch("https://quote-api.jup.ag/v1/swap", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          route: routes[0],
-          userPublicKey: wallet.publicKey!.toBase58(),
-          wrapUnwrapSOL: true,
-          feeAccount: "6vEHAWe3ubJLY8cqWS82wYwXtzrt7FA4dVnGnFfjM9DB",
-        }),
-      })
-    ).json();
+  console.log(price);
 
-    const { setupTransaction, swapTransaction, cleanupTransaction } =
-      transactions;
+  const updatedPrice = price;
 
-    for (let serializedTransaction of [
-      setupTransaction,
-      swapTransaction,
-      cleanupTransaction,
-    ].filter(Boolean)) {
-      const transaction = Transaction.from(
-        Buffer.from(serializedTransaction, "base64")
-      );
-      const txid = await wallet.sendTransaction(transaction, connection, {
-        skipPreflight: true,
-      });
-      console.log(`https://solscan.io/tx/${txid}`);
-      const latestBlockHash = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: txid,
-      });
-    }
-  };
+  const swapTokens = async () => {};
 
   return (
     <div>
       <h1 className="mb-25">Convert</h1>
-      <h3 className="mb-25">
+      {!wallet.connected && <WalletMultiButton />}
+      <h3 className="mt-25 mb-25">
         ${tokenFrom} to ${tokenTo}
       </h3>
-      {!wallet.connected && <WalletMultiButton />}
+
       <div className="mt-25 mb-25">
         <label>From:</label>
         <div className="input">
@@ -123,7 +98,7 @@ export const Converter: React.FC<ConverterProps> = () => {
           <input
             className="token-input"
             onChange={onAmountChange}
-            value={price}
+            value={updatedPrice}
           />
           <div className="token">${tokenTo}</div>
         </div>
