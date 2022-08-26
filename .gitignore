@@ -22,3 +22,5 @@ yarn-error.log*
 
 # keys
 convertion-keypair.json
+
+.next
