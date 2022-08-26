@@ -112,11 +112,10 @@ export const Converter: React.FC<ConverterProps> = () => {
   return (
     <div>
       <h1 className="mb-25">Convert</h1>
-      {!wallet.connected && <WalletMultiButton />}
-
-      <h3 className="mt-25 mb-25">
+      <h3 className="mb-25">
         ${tokenFrom} to ${tokenTo}
       </h3>
+      {!wallet.connected && <WalletMultiButton />}
       <div className="mt-25 mb-25">
         <label>From:</label>
         <div className="input">
