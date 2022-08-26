@@ -1,128 +1,233 @@
-import fetch from "cross-fetch";
-import { ChangeEvent, useEffect, useState } from "react";
-import { Transaction } from "@solana/web3.js";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { INPUT_MINT_ADDRESS, OUTPUT_MINT_ADDRESS } from "../constants";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useJupiterApiContext } from "../contexts/JupiterApiProvider";
 
-interface ConverterProps {
-  network: string;
+interface IJupiterFormProps {}
+interface IState {
+  amount: number;
+  inputMint: PublicKey;
+  outputMint: PublicKey;
+  slippage: number;
 }
 
-export const Converter: React.FC<ConverterProps> = () => {
-  // Wallet Connection
+const Converter: FunctionComponent<IJupiterFormProps> = (props) => {
   const wallet = useWallet();
   const { connection } = useConnection();
+  const { tokenMap, routeMap, loaded, api } = useJupiterApiContext();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formValue, setFormValue] = useState<IState>({
+    amount: 1 * 10 ** 6,
+    inputMint: new PublicKey(INPUT_MINT_ADDRESS),
+    outputMint: new PublicKey(OUTPUT_MINT_ADDRESS),
+    slippage: 0.1, // 0.01%
+  });
+  const [routes, setRoutes] = useState<
+    Awaited<ReturnType<typeof api.v1QuoteGet>>["data"]
+  >([]);
 
-  const [amount, setAmount] = useState<number>(1);
-  const [debouncedPrice, setDebouncedPrice] = useState<number>(amount);
-  const [price, setPrice] = useState([]);
+  const [inputTokenInfo, outputTokenInfo] = useMemo(() => {
+    return [
+      tokenMap.get(formValue.inputMint?.toBase58() || ""),
+      tokenMap.get(formValue.outputMint?.toBase58() || ""),
+    ];
+  }, [
+    tokenMap,
+    formValue.inputMint?.toBase58(),
+    formValue.outputMint?.toBase58(),
+  ]);
 
-  const [tokenFrom, setTokenFrom] = useState<string>("SOL");
-  const [tokenTo, setTokenTo] = useState<string>("YAKU");
-
-  const [slippage, setSlippage] = useState<number>(0.5);
-
-  const onAmountChange = (event: ChangeEvent<any>) => {
-    setAmount(event.target.value);
-  };
-
-  const onSlippageChange = (event: ChangeEvent<any>) => {
-    setSlippage(event.target.value);
-  };
+  const fetchRoute = useCallback(() => {
+    setIsLoading(true);
+    api
+      .v1QuoteGet({
+        amount: formValue.amount,
+        inputMint: formValue.inputMint.toBase58(),
+        outputMint: formValue.outputMint.toBase58(),
+        slippage: formValue.slippage,
+      })
+      .then(({ data }) => {
+        if (data) {
+          setRoutes(data);
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [api, formValue]);
 
   useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedPrice(amount);
-    }, 100);
+    fetchRoute();
+  }, [fetchRoute]);
 
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [amount]);
+  const validOutputMints = useMemo(
+    () => routeMap.get(formValue.inputMint?.toBase58() || "") || [],
+    [routeMap, formValue.inputMint?.toBase58()]
+  );
 
   useEffect(() => {
-    const getPrice = async () => {
-      const response = await fetch(
-        `https://price.jup.ag/v1/price?id=${tokenFrom}&vsToken=${tokenTo}`
-      );
-      const newPrice = await response.json();
-      setPrice(newPrice.data.price);
-    };
-    getPrice();
-  }, [tokenFrom, tokenTo]);
+    if (formValue.inputMint) {
+      const possibleOutputs = routeMap.get(formValue.inputMint.toBase58());
 
-  // useEffect(() => {
-  //   const search = async () => {
-  //     const { data } = await axios.get("https://en.wikipedia.org/w/api.php", {
-  //       params: {
-  //         action: "query",
-  //         list: "search",
-  //         origin: "*",
-  //         format: "json",
-  //         srsearch: debouncedPrice,
-  //       },
-  //     });
-  //     setPrice(data.query.search);
-  //   };
-  //   search();
-  // }, [debouncedPrice]);
-
-  console.log(price);
-
-  const updatedPrice = price;
-
-  const swapTokens = async () => {};
+      if (
+        possibleOutputs &&
+        !possibleOutputs?.includes(formValue.outputMint?.toBase58() || "")
+      ) {
+        setFormValue((val) => ({
+          ...val,
+          outputMint: new PublicKey(possibleOutputs[0]),
+        }));
+      }
+    }
+  }, [formValue.inputMint?.toBase58(), formValue.outputMint?.toBase58()]);
 
   return (
-    <div>
-      <h1 className="mb-25">Convert</h1>
-      {!wallet.connected && <WalletMultiButton />}
-      <h3 className="mt-25 mb-25">
-        ${tokenFrom} to ${tokenTo}
-      </h3>
-
-      <div className="mt-25 mb-25">
-        <label>From:</label>
-        <div className="input">
-          <input
-            className="token-input"
-            onChange={onAmountChange}
-            value={amount}
-          />
-          <div className="token">${tokenFrom}</div>
-        </div>
+    <div className="converter">
+      <div className="mb-25">
+        <p>From:</p>
+        <select
+          id="inputMint"
+          name="inputMint"
+          onChange={(event) => {
+            const pbKey = new PublicKey(event.currentTarget.value);
+            if (pbKey) {
+              setFormValue((val) => ({
+                ...val,
+                inputMint: pbKey,
+              }));
+            }
+          }}
+          value={formValue.inputMint?.toBase58()}
+        >
+          {Array.from(routeMap.keys()).map((tokenMint) => {
+            return (
+              <option key={tokenMint} value={tokenMint}>
+                {tokenMap.get(tokenMint)?.name || "Unknown"}
+              </option>
+            );
+          })}
+        </select>
       </div>
       <div className="mb-25">
-        <label>To:</label>
-        <div className="input">
-          <input
-            className="token-input"
-            onChange={onAmountChange}
-            value={updatedPrice}
-          />
-          <div className="token">${tokenTo}</div>
-        </div>
+        <p>To:</p>
+        <select
+          id="outputMint"
+          name="outputMint"
+          value={formValue.outputMint?.toBase58()}
+          onChange={(event) => {
+            const pbKey = new PublicKey(event.currentTarget.value);
+            if (pbKey) {
+              setFormValue((val) => ({
+                ...val,
+                outputMint: pbKey,
+              }));
+            }
+          }}
+        >
+          {validOutputMints.map((tokenMint) => {
+            return (
+              <option key={tokenMint} value={tokenMint}>
+                {tokenMap.get(tokenMint)?.name || "Unknown"}
+              </option>
+            );
+          })}
+        </select>
       </div>
-      <div className="mt-50 mb-50">
+      <div className="mb-50">
+        <label htmlFor="amount mb-10">Input ({inputTokenInfo?.symbol}):</label>
+        <input
+          className="token-input"
+          id="amount"
+          name="amount"
+          onInput={(event: any) => {
+            let newValue = Number(event.target?.value || 0);
+            newValue = Number.isNaN(newValue) ? 0 : newValue;
+            setFormValue((val) => ({
+              ...val,
+              amount: Math.max(newValue, 0),
+            }));
+          }}
+          pattern="[0-9]*"
+          type="text"
+          value={formValue.amount}
+        />
+      </div>
+      {routes?.[0] &&
+        (() => {
+          const route = routes[0];
+          if (route) {
+            return (
+              <div>
+                <p className="mt-50 mb-50">
+                  You will receive:{" "}
+                  {(route.outAmount || 0) /
+                    10 ** (outputTokenInfo?.decimals || 1)}{" "}
+                  {outputTokenInfo?.symbol}
+                </p>
+              </div>
+            );
+          }
+        })()}
+      <div className="mb-50">
         <div className="mb-25">
           <h4>Transaction Settings</h4>
         </div>
         <div className="slippage mb-25">
-          Slippage Tolerance:
-          <div className="slippage-input-group">
-            <input
-              className="slippage-input"
-              onChange={onSlippageChange}
-              value={slippage}
-            />
-            <div className="ml-10">%</div>
-          </div>
+          Slippage tolerance: {formValue.slippage / 10}%
         </div>
-        <div className="mb-25">Allowance: Exact Amount</div>
-        <div className="mb-25">Swap Fee: 0.01%</div>
+        <div className="mb-25">Allowance: exact amount</div>
       </div>
-      <button className="convert-button" onClick={swapTokens}>
-        Convert
+      <button
+        className="button-primary"
+        disabled={isSubmitting}
+        onClick={async () => {
+          try {
+            if (
+              !isLoading &&
+              routes?.[0] &&
+              wallet.publicKey &&
+              wallet.signAllTransactions
+            ) {
+              setIsSubmitting(true);
+
+              const { swapTransaction, setupTransaction, cleanupTransaction } =
+                await api.v1SwapPost({
+                  body: {
+                    route: routes[0],
+                    userPublicKey: wallet.publicKey.toBase58(),
+                  },
+                });
+              const transactions = (
+                [setupTransaction, swapTransaction, cleanupTransaction].filter(
+                  Boolean
+                ) as string[]
+              ).map((tx) => {
+                return Transaction.from(Buffer.from(tx, "base64"));
+              });
+              await wallet.signAllTransactions(transactions);
+              for (let transaction of transactions) {
+                const txId = await connection.sendRawTransaction(
+                  transaction.serialize()
+                );
+                await connection.confirmTransaction(txId);
+                console.log(`https://solscan.io/tx/${txId}`);
+              }
+            }
+          } catch (event) {
+            console.error(event);
+          }
+          setIsSubmitting(false);
+        }}
+      >
+        {isSubmitting ? "Converting..." : "Convert"}
       </button>
     </div>
   );
